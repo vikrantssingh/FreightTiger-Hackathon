@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Freight Tiger - Smart Shipping Cost Assistant</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="bg-amber-500 text-slate-950 p-2 rounded-lg font-black tracking-wider text-lg flex items-center">
+          <i data-lucide="truck" class="w-6 h-6 mr-1.5"></i> FT
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-white flex items-center gap-2">
+            FreightTiger <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-semibold border border-amber-500/30">AI Cost Watcher</span>
+          </h1>
+          <p class="text-xs text-slate-400">Software Engineering Intern (AI) Challenge • Live MVP</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4 text-xs text-slate-400">
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> Localhost :8000 Active
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
+    
+    <!-- KPI Summary Grid -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div class="bg-slate-800 border border-slate-700/60 rounded-xl p-4 shadow-sm">
+        <div class="text-slate-400 text-xs font-medium uppercase tracking-wider">Shipments</div>
+        <div id="stat-shipments" class="text-2xl font-bold text-white mt-1">--</div>
+        <div class="text-[11px] text-slate-500 mt-1">Total dataset rows</div>
+      </div>
+      <div class="bg-slate-800 border border-slate-700/60 rounded-xl p-4 shadow-sm">
+        <div class="text-slate-400 text-xs font-medium uppercase tracking-wider">Corridors</div>
+        <div id="stat-corridors" class="text-2xl font-bold text-white mt-1">--</div>
+        <div class="text-[11px] text-slate-500 mt-1">Short / Med / Long</div>
+      </div>
+      <div class="bg-slate-800 border border-slate-700/60 rounded-xl p-4 shadow-sm">
+        <div class="text-slate-400 text-xs font-medium uppercase tracking-wider">Anomalies</div>
+        <div id="stat-anomalies" class="text-2xl font-bold text-amber-400 mt-1">--</div>
+        <div class="text-[11px] text-slate-500 mt-1">Threshold spikes</div>
+      </div>
+      <div class="bg-slate-800 border border-slate-700/60 rounded-xl p-4 shadow-sm">
+        <div class="text-slate-400 text-xs font-medium uppercase tracking-wider">Justified</div>
+        <div id="stat-justified" class="text-2xl font-bold text-emerald-400 mt-1">--</div>
+        <div class="text-[11px] text-slate-500 mt-1">Verified notes cited</div>
+      </div>
+      <div class="bg-slate-800 border border-slate-700/60 rounded-xl p-4 shadow-sm">
+        <div class="text-slate-400 text-xs font-medium uppercase tracking-wider">Unexplained</div>
+        <div id="stat-unexplained" class="text-2xl font-bold text-rose-400 mt-1">--</div>
+        <div class="text-[11px] text-slate-500 mt-1">Flagged for human review</div>
+      </div>
+      <div class="bg-slate-800 border border-slate-700/60 rounded-xl p-4 shadow-sm">
+        <div class="text-slate-400 text-xs font-medium uppercase tracking-wider">Hallucination</div>
+        <div id="stat-hallucination" class="text-2xl font-bold text-cyan-400 mt-1">--</div>
+        <div class="text-[11px] text-slate-500 mt-1">Guardrail verified</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex border-b border-slate-700 space-x-6 text-sm font-semibold">
+      <button onclick="switchTab('anomalies')" id="tab-anomalies-btn" class="pb-3 text-amber-400 border-b-2 border-amber-400 flex items-center gap-2">
+        <i data-lucide="alert-triangle" class="w-4 h-4"></i> Anomalies Table
+      </button>
+      <button onclick="switchTab('chart')" id="tab-chart-btn" class="pb-3 text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-2">
+        <i data-lucide="line-chart" class="w-4 h-4"></i> Baseline Visualizer
+      </button>
+      <button onclick="switchTab('chat')" id="tab-chat-btn" class="pb-3 text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-2">
+        <i data-lucide="message-square" class="w-4 h-4"></i> AI Cost Assistant Q&A
+      </button>
+    </div>
+
+    <!-- Section 1: Anomalies Table -->
+    <div id="section-anomalies" class="space-y-4">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-800/60 p-4 rounded-xl border border-slate-700">
+        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Corridor Filter</label>
+            <select id="filter-route" onchange="fetchAnomalies()" class="bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-1.5 focus:ring-amber-500 focus:border-amber-500 text-slate-200">
+              <option value="All">All Routes</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Status Filter</label>
+            <select id="filter-status" onchange="fetchAnomalies()" class="bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-1.5 focus:ring-amber-500 focus:border-amber-500 text-slate-200">
+              <option value="All">All Statuses</option>
+              <option value="No (justified)">No (justified)</option>
+              <option value="Yes">Yes (unexplained)</option>
+            </select>
+          </div>
+        </div>
+        <div class="text-xs text-slate-400 flex items-center gap-1.5">
+          <i data-lucide="file-check" class="w-4 h-4 text-emerald-400"></i> Contract format: <code>sample_output_format.csv</code>
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[11px] border-b border-slate-700">
+              <tr>
+                <th class="py-3 px-4">Route</th>
+                <th class="py-3 px-4">Week Of</th>
+                <th class="py-3 px-4">Cost (₹/t-km)</th>
+                <th class="py-3 px-4">vs Own History</th>
+                <th class="py-3 px-4">vs Similar Routes</th>
+                <th class="py-3 px-4">Verdict</th>
+                <th class="py-3 px-4">Note ID</th>
+                <th class="py-3 px-4 max-w-md">Reason & Operational Finding</th>
+              </tr>
+            </thead>
+            <tbody id="anomalies-table-body" class="divide-y divide-slate-700/60">
+              <tr>
+                <td colspan="8" class="text-center py-8 text-slate-500">Loading anomalies...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Baseline Chart Visualizer -->
+    <div id="section-chart" class="hidden space-y-4">
+      <div class="flex items-center justify-between bg-slate-800/60 p-4 rounded-xl border border-slate-700">
+        <div class="flex items-center gap-3">
+          <label class="text-xs text-slate-400">Select Corridor to Inspect:</label>
+          <select id="chart-route-select" onchange="renderChart()" class="bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-1.5 text-slate-200">
+          </select>
+        </div>
+        <div class="text-xs text-slate-400">
+          Weekly metrics across all 104 weeks (Jan 2024 - Dec 2025)
+        </div>
+      </div>
+
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
+        <div class="h-96 w-full">
+          <canvas id="routeChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: AI Assistant Q&A Chat -->
+    <div id="section-chat" class="hidden max-w-4xl mx-auto space-y-4">
+      <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-xl flex flex-col h-[560px]">
+        
+        <!-- Chat Header -->
+        <div class="bg-slate-900/90 border-b border-slate-700 p-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+              <i data-lucide="bot" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="text-sm font-bold text-white">Freight Tiger Cost Intelligence Agent</div>
+              <div class="text-xs text-slate-400">Natural language retrieval over shipment baselines & context notes</div>
+            </div>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            Strict Guardrails Active
+          </span>
+        </div>
+
+        <!-- Chat Messages -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
+          <div class="flex items-start gap-3">
+            <div class="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+              <i data-lucide="bot" class="w-4 h-4"></i>
+            </div>
+            <div class="bg-slate-700/60 rounded-xl p-3 max-w-xl text-slate-200 leading-relaxed">
+              Hello! I am your Freight Cost Assistant. You can ask me any question about cost movements, historical baselines, or whether surges on specific corridors were justified.
+            </div>
+          </div>
+        </div>
+
+        <!-- Suggestion Pills -->
+        <div class="px-4 py-2 border-t border-slate-700/60 bg-slate-850 flex flex-wrap gap-2 text-[11px]">
+          <span class="text-slate-400 self-center mr-1">Quick prompts:</span>
+          <button onclick="sendQuickPrompt('Why did Ahmedabad-Mumbai get pricier in January?')" class="bg-slate-700/60 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-600 transition">
+            Ahmedabad-Mumbai in Jan?
+          </button>
+          <button onclick="sendQuickPrompt('Why did Chennai-Bangalore spike in February 2025?')" class="bg-slate-700/60 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-600 transition">
+            Chennai-Bangalore in Feb?
+          </button>
+          <button onclick="sendQuickPrompt('Why was Delhi-Jaipur flagged in November 2024?')" class="bg-slate-700/60 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-600 transition">
+            Delhi-Jaipur in Nov 2024?
+          </button>
+          <button onclick="sendQuickPrompt('List all justified cost surge incidents')" class="bg-slate-700/60 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-600 transition">
+            All justified surges
+          </button>
+        </div>
+
+        <!-- Chat Input Form -->
+        <div class="p-4 bg-slate-900/90 border-t border-slate-700">
+          <form onsubmit="handleChatSubmit(event)" class="flex gap-2">
+            <input id="chat-input" type="text" placeholder="Ask a question (e.g. 'Why did Chennai-Bangalore get pricier in March?')..." class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+            <button type="submit" id="chat-submit-btn" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold px-4 py-2 rounded-lg text-xs flex items-center gap-1.5 transition">
+              <span>Send</span> <i data-lucide="send" class="w-3.5 h-3.5"></i>
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 py-4 text-center text-xs text-slate-500">
+    Freight Tiger 24-Hour AI Challenge • Software Engineering Intern (AI) • 100% Deterministic Reproducibility
+  </footer>
+
+  <!-- Script Logic -->
+  <script>
+    let chartInstance = null;
+
+    async function init() {
+      lucide.createIcons();
+      await fetchSummary();
+      await fetchAnomalies();
+      await populateRouteOptions();
+    }
+
+    async function fetchSummary() {
+      try {
+        const res = await fetch('/api/summary');
+        const data = await res.json();
+        document.getElementById('stat-shipments').textContent = Number(data.total_shipments).toLocaleString();
+        document.getElementById('stat-corridors').textContent = data.total_corridors;
+        document.getElementById('stat-anomalies').textContent = data.total_anomalies;
+        document.getElementById('stat-justified').textContent = data.justified_count;
+        document.getElementById('stat-unexplained').textContent = data.unexplained_count;
+        document.getElementById('stat-hallucination').textContent = data.hallucination_rate;
+      } catch (err) {
+        console.error('Error fetching summary:', err);
+      }
+    }
+
+    async function populateRouteOptions() {
+      try {
+        const res = await fetch('/api/summary');
+        const data = await res.json();
+        const routeFilter = document.getElementById('filter-route');
+        const chartSelect = document.getElementById('chart-route-select');
+
+        data.corridors.forEach(r => {
+          const opt1 = document.createElement('option');
+          opt1.value = r;
+          opt1.textContent = r;
+          routeFilter.appendChild(opt1);
+
+          const opt2 = document.createElement('option');
+          opt2.value = r;
+          opt2.textContent = r;
+          chartSelect.appendChild(opt2);
+        });
+      } catch (err) {
+        console.error('Error populating corridors:', err);
+      }
+    }
+
+    async function fetchAnomalies() {
+      const route = document.getElementById('filter-route').value;
+      const status = document.getElementById('filter-status').value;
+      const tbody = document.getElementById('anomalies-table-body');
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-500">Loading...</td></tr>';
+
+      try {
+        let url = `/api/anomalies?route=${encodeURIComponent(route)}&flagged=${encodeURIComponent(status)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-400">No anomalies match the selected filters.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = '';
+        data.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-750/40 transition border-b border-slate-750';
+
+          const isJustified = row.flagged === 'No (justified)';
+          const badgeClass = isJustified 
+            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+            : 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+          
+          const noteBadge = row.matched_note_id 
+            ? `<span class="px-2 py-0.5 rounded font-mono font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">${row.matched_note_id}</span>`
+            : '<span class="text-slate-600">-</span>';
+
+          tr.innerHTML = `
+            <td class="py-3 px-4 font-semibold text-slate-200">${row.route}</td>
+            <td class="py-3 px-4 font-mono text-slate-400">${row.week_of}</td>
+            <td class="py-3 px-4 font-mono text-slate-200 font-bold">${Number(row.cost_per_tonne_km).toFixed(2)}</td>
+            <td class="py-3 px-4 font-mono text-amber-300/90">${row.vs_own_history}</td>
+            <td class="py-3 px-4 font-mono text-cyan-300/90">${row.vs_similar_routes}</td>
+            <td class="py-3 px-4">
+              <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass}">
+                ${row.flagged}
+              </span>
+            </td>
+            <td class="py-3 px-4">${noteBadge}</td>
+            <td class="py-3 px-4 text-slate-300 text-[11px] leading-relaxed max-w-md">${row.reason}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-rose-400">Error loading data: ${err}</td></tr>`;
+      }
+    }
+
+    function switchTab(tab) {
+      document.getElementById('section-anomalies').classList.add('hidden');
+      document.getElementById('section-chart').classList.add('hidden');
+      document.getElementById('section-chat').classList.add('hidden');
+
+      document.getElementById('tab-anomalies-btn').className = 'pb-3 text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-2';
+      document.getElementById('tab-chart-btn').className = 'pb-3 text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-2';
+      document.getElementById('tab-chat-btn').className = 'pb-3 text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-2';
+
+      if (tab === 'anomalies') {
+        document.getElementById('section-anomalies').classList.remove('hidden');
+        document.getElementById('tab-anomalies-btn').className = 'pb-3 text-amber-400 border-b-2 border-amber-400 flex items-center gap-2';
+      } else if (tab === 'chart') {
+        document.getElementById('section-chart').classList.remove('hidden');
+        document.getElementById('tab-chart-btn').className = 'pb-3 text-amber-400 border-b-2 border-amber-400 flex items-center gap-2';
+        renderChart();
+      } else if (tab === 'chat') {
+        document.getElementById('section-chat').classList.remove('hidden');
+        document.getElementById('tab-chat-btn').className = 'pb-3 text-amber-400 border-b-2 border-amber-400 flex items-center gap-2';
+      }
+      lucide.createIcons();
+    }
+
+    async function renderChart() {
+      const select = document.getElementById('chart-route-select');
+      const route = select.value || 'Ahmedabad-Mumbai';
+
+      try {
+        const res = await fetch(`/api/route-history/${encodeURIComponent(route)}`);
+        const data = await res.json();
+
+        const ctx = document.getElementById('routeChart').getContext('2d');
+        if (chartInstance) chartInstance.destroy();
+
+        chartInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: data.weeks,
+            datasets: [
+              {
+                label: 'Actual Cost (₹/t-km)',
+                data: data.cost_per_tonne_km,
+                borderColor: '#f59e0b',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                borderWidth: 2,
+                tension: 0.1,
+                pointRadius: 2
+              },
+              {
+                label: 'Trailing 8w Rolling Avg',
+                data: data.past_8w_avg,
+                borderColor: '#38bdf8',
+                borderWidth: 1.5,
+                borderDash: [5, 5],
+                pointRadius: 0
+              },
+              {
+                label: 'Peer Group Weekly Avg',
+                data: data.peer_avg,
+                borderColor: '#94a3b8',
+                borderWidth: 1.5,
+                borderDash: [2, 2],
+                pointRadius: 0
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: '#cbd5e1', font: { size: 11 } } },
+              tooltip: { mode: 'index', intersect: false }
+            },
+            scales: {
+              x: {
+                ticks: { color: '#64748b', maxTicksLimit: 14, font: { size: 10 } },
+                grid: { color: 'rgba(51, 65, 85, 0.4)' }
+              },
+              y: {
+                ticks: { color: '#94a3b8', font: { size: 10 } },
+                grid: { color: 'rgba(51, 65, 85, 0.4)' }
+              }
+            }
+          }
+        });
+      } catch (err) {
+        console.error('Error rendering chart:', err);
+      }
+    }
+
+    async function handleChatSubmit(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('chat-input');
+      const question = input.value.trim();
+      if (!question) return;
+
+      appendChatMessage('user', question);
+      input.value = '';
+
+      const btn = document.getElementById('chat-submit-btn');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question })
+        });
+        const data = await res.json();
+        appendChatMessage('assistant', data.answer);
+      } catch (err) {
+        appendChatMessage('assistant', 'Error communicating with assistant: ' + err);
+      } finally {
+        btn.disabled = false;
+        lucide.createIcons();
+      }
+    }
+
+    function sendQuickPrompt(promptText) {
+      document.getElementById('chat-input').value = promptText;
+      handleChatSubmit();
+    }
+
+    function appendChatMessage(sender, text) {
+      const container = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.className = 'flex items-start gap-3';
+
+      if (sender === 'user') {
+        div.innerHTML = `
+          <div class="w-7 h-7 rounded-full bg-slate-600 text-slate-200 flex items-center justify-center shrink-0">
+            <i data-lucide="user" class="w-4 h-4"></i>
+          </div>
+          <div class="bg-amber-500/20 border border-amber-500/30 rounded-xl p-3 max-w-xl text-amber-200 leading-relaxed whitespace-pre-line">
+            ${text}
+          </div>
+        `;
+      } else {
+        div.innerHTML = `
+          <div class="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+            <i data-lucide="bot" class="w-4 h-4"></i>
+          </div>
+          <div class="bg-slate-700/60 rounded-xl p-3 max-w-xl text-slate-200 leading-relaxed whitespace-pre-line">
+            ${text}
+          </div>
+        `;
+      }
+
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+      lucide.createIcons();
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>

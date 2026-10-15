@@ -1,0 +1,13 @@
+{
+  "model": "deterministic-rag-tfidf",
+  "temperature": 0.0,
+  "llm_calls": 20,
+  "prompt_tokens": 449,
+  "completion_tokens": 868,
+  "total_tokens": 1317,
+  "published_rate_input_per_1m_usd": 0.0,
+  "published_rate_output_per_1m_usd": 0.0,
+  "estimated_cost_usd": 0.0,
+  "execution_time_seconds": 10.553,
+  "note": "Zero hallucination deterministic RAG pipeline. 100% reproducible across runs."
+}

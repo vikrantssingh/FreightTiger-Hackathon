@@ -1,0 +1,6 @@
+# 3-Run Reproducibility Diff Report
+# All 3 runs matched byte-for-byte identically!
+# Run 1 SHA256: cbc30fbb32eb3fafa48d6be349c6889716b16fbf6734eb42d537783cbe7ad330
+# Run 2 SHA256: cbc30fbb32eb3fafa48d6be349c6889716b16fbf6734eb42d537783cbe7ad330
+# Run 3 SHA256: cbc30fbb32eb3fafa48d6be349c6889716b16fbf6734eb42d537783cbe7ad330
+# Zero diff detected between runs.
