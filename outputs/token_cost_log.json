@@ -8,6 +8,6 @@
   "published_rate_input_per_1m_usd": 0.0,
   "published_rate_output_per_1m_usd": 0.0,
   "estimated_cost_usd": 0.0,
-  "execution_time_seconds": 10.553,
+  "execution_time_seconds": 3.971,
   "note": "Zero hallucination deterministic RAG pipeline. 100% reproducible across runs."
 }
